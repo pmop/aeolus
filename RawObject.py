@@ -2,11 +2,12 @@ import  hashlib
 import json
 class RawObject:
     """Abstract class RawObject
+        RawObject should encapsulate raw object data
     """
     # Attributes:
-    __rawData = None  # (bytearray) 
-    __MD5 = None  # (string) 
-    __sensorName = None  # (string) 
+    __rawData = None  # (jsonobject)
+    __MD5 = None  # (string)
+    __sensorName = None  # (string)
     __date = None  # (date)
 
     def __init__(self, rawData, sensorName, date):
@@ -15,11 +16,11 @@ class RawObject:
         self.__rawData = rawData
         self.__MD5.update (rawData)
         self.__sensorName = sensorName
-    
+
     # Operations
     def getRawData(self):
         """function getRawData
-        
+
         returns bytearray
         """
         return self.__rawData
