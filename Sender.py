@@ -23,7 +23,7 @@ class SendData(object):
 
 def main ():
     sender = SendData ('159.203.103.181','aeolus')
-    sender.send ('/home/pedro/TESTFILE')
+    sender.send ('/home/pi/TESTFILE')
     sender.end()
 
 if __name__ == "__main__":
