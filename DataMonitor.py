@@ -1,6 +1,6 @@
 import Adafruit_DHT
 import RPi.GPIO as GPIO
-import time
+import time, sys
 import RawObject
 import json
 import datetime
@@ -8,24 +8,26 @@ import os
 from daemon import Daemon
 from RawObject import RawObject
 
-
 ## Setting up things
-print ("Aeolus Data Monitor\n")
-print ("Reading values from Sensors")
 
 class DataMon (Daemon):
-        __delay = 6
+#class DataMon (object):
         def run(self):
 
-                GPIO.setmode(GPIO.BOARD)
-                rainSensorPine = 11
-                tempSensor = Adafruit_DHT.DHT11
-                tempSensorPine = 22
-                refresh = 60
-                GPIO.setup(11, GPIO.IN)
+		GPIO.setmode(GPIO.BOARD)
+		rainSensorPine = 11
+		tempSensor = Adafruit_DHT.DHT11
+		tempSensorPine = 22
+		refresh = 60
+		GPIO.setup(11, GPIO.IN)
+
+
+
+		print ("Aeolus Data Monitor\n")
 
                 pathSaveData = os.path.expanduser ("~") +"/SensorData"
                 while (True):
+			print ("Reading values from Sensors")
                         hum, temp = Adafruit_DHT.read_retry(tempSensor,
                                                             tempSensorPine)
                         #Get time closest as possible to sensor read call
@@ -33,6 +35,7 @@ class DataMon (Daemon):
                                               datetime.now()
                                               .strftime("%Y-%m-%d %H:%M:%S"))
                         rain = not GPIO.input(rainSensorPine)
+			print (temp)
                         if hum is not None and temp is not None:
                                 rawDHT11 = {
                                         "temp": temp,
@@ -48,34 +51,33 @@ class DataMon (Daemon):
                                                         "YL83",
                                                         currentdate)
 
-                                self.__saveData
-                                (dht11Object.getDate() + ".json",
+				#print dht11Object.getJsonData()
+                                self.dataSaver(dht11Object.getDate() + ".json",
                                  pathSaveData,
                                  dht11Object.getJsonData() )
 
-                                self.__saveData
-                                (yl83Object.getDate() + "C.json",
+
+                                self.dataSaver(yl83Object.getDate() + "C.json",
                                  pathSaveData,
                                  yl83Object.getJsonData() )
+
                         else:
                                 print ("Couldn't retrieve information")
-                                time.sleep (self.__delay) # sleeps for 6 seconds
+                        time.sleep (6) # sleeps for 6 seconds
 
-        def __saveData (self,filename,path,data):
+        def dataSaver (self,filename,path,data):
+		print "Saved data"
                 if os.path.isdir (path):
                         file = open (path +"/" + filename,"w")
                         file.write (data)
                         file.close
                 else:
                         os.mkdir (path)
-                        saveData (filename,
+                        self.dataSaver (filename,
                                   path,data)
 
 def main ():
     daemon = DataMon ('/tmp/dsender.pid')
-  #  dsender = Sender()
- #   dsender.run ()
-  #  dsender.stop ()
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:
             daemon.start()
