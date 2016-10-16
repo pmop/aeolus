@@ -43,20 +43,32 @@ while (1):
 		if rain:
 			print ("Raining")
 
-        	## Create RawObject
-        	rawdata = {
-                	"temp" : temp,
-                	"hum" : hum,
-			"rain": rain
-        	}
-        	## RawObject gets created
-        	dataobject = RawObject.RawObject (rawdata,"DHT11",unicode(
-                	datetime.datetime.now()
-                	.strftime("%Y-%m-%d %H:%M:%S")))
-        	## Data gets saved at ~/SensorData
-        	saveData (dataobject.getDate() + ".json",
-                	  pathSaveData, dataobject.getJsonData() )
-       		 ## Sender will be launched at another thread. Will
+        ## Create RawData
+    	rawDHT11 = {
+            "temp" : temp,
+            "hum" : hum
+    	}
+
+        rawYL83 = {
+            "rain" : rain
+        }
+
+    	## RawObject gets created
+    	dht11Object = RawObject.RawObject (rawDHT11,"DHT11",unicode(
+            	datetime.datetime.now()
+            	.strftime("%Y-%m-%d %H:%M:%S")))
+
+        yl83Object = RawObject.RawObject (rawYL83, "YL83", unicode(
+                datetime.datetime.now()
+                .strftime("%Y-%m-%d %H:%M:%S")))
+
+    	## Data gets saved at ~/SensorData
+    	saveData (dht11Object.getDate() + ".json",
+            	  pathSaveData, dht11Object.getJsonData() )
+
+        saveData (yl83Object.getDate() + "C.json",
+            	  pathSaveData, yl83Object.getJsonData() )
+   		## Sender will be launched at another thread. Will
 
 	else:
 		print ("Temp/Hum Retrieve Failed")
