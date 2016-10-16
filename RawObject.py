@@ -1,7 +1,7 @@
 import  hashlib
 import json
-class RawObject:
-    """Abstract class RawObject
+class RawObject(object):
+    """
         RawObject should encapsulate raw object data
     """
     # Attributes:
@@ -14,7 +14,6 @@ class RawObject:
         self.__date = date
         self.__MD5 = hashlib.md5 ()
         self.__rawData = rawData
-        self.__MD5.update (rawData)
         self.__sensorName = sensorName
 
     # Operations
@@ -32,13 +31,20 @@ class RawObject:
         """
         data = {
             "rawData" : self.__rawData,
+       #     "md5" : self.__MD5.hexdigest (),
+            "date" : self.__date,
+            "sensorName" : self.__sensorName
+        }
+        self.__MD5.update ( json.dumps(data) )
+        data = {
+            "rawData" : self.__rawData,
             "md5" : self.__MD5.hexdigest (),
             "date" : self.__date,
             "sensorName" : self.__sensorName
         }
         return json.dumps(data)
 
-    def getMD5(self):
+   # def getMD5(self):
 
         """function getMD5
         raise NotImplementedError()
