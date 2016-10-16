@@ -39,7 +39,7 @@ while (1):
 
 	if hum is not None and temp is not None:
 		## Show status on console
-		print ("Temp = {0:0.1f} and Hum = {1:0.1f}\n").format(temp, hum);
+		print ("Temp = {0:0.1f} and Hum = {1:0.1f}\n").format(temp, hum)
 		if rain:
 			print ("Raining")
 
@@ -68,7 +68,7 @@ while (1):
 
         saveData (yl83Object.getDate() + "C.json",
             	  pathSaveData, yl83Object.getJsonData() )
-   		## Sender will be launched at another thread. Will
+   		## Sender will be launched at another thread.
 
 	else:
 		print ("Temp/Hum Retrieve Failed")
