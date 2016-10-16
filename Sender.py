@@ -6,6 +6,7 @@ from os.path import exists, expanduser, isfile, join
 from os import listdir, remove
 import datetime
 import time, sys
+import requests
 
 class SendData(object):
     _sshclient = None
@@ -43,13 +44,20 @@ class Sender(Daemon):
 #class Sender(object):
     def run(self):
         log = []
-        con = SendData ('159.203.103.181','aeolus')
+        isCon = self.__checkConnection()
+        con = None
         while (True):
             sent = []
             toSend = self.__listData()
+            # Inits ssh if has connection
+            if isCon and con == None:
+                con = SendData ('159.203.103.181','aeolus')
 
             for file in toSend:
-                success,status = con.send (file,"~/SensorData")
+                success = False
+                status = "No connection"
+                if isCon and con != None:
+                    success,status = con.send (file,"~/SensorData")
                 if success:
                     sent.append (file)
                     log.append (self.__timeNow() +  " " +
@@ -57,13 +65,22 @@ class Sender(Daemon):
                 else:
                     mesg = "Couldn't send " + status + " "
                     log.append (self.__timeNow() + mesg  + file)
-                    con = SendData ('159.203.103.181','aeolus')
+                    isCon = self.__checkConnection()
+                    if isCon:
+                        con = SendData ('159.203.103.181','aeolus')
 
             self.__wipeSentData (sent)
             self.__writeToLog (log)
             time.sleep (1)
             if len(log) > 0:
                 log[:] = []
+
+    def __checkConnection (self,url='http://www.google.com',timeout=5):
+        try:
+            _ = requests.get (url,timeout=timeout)
+            return True
+        except requests.ConnectionError:
+            return False
 
     def __listData(self):
         print "listing files"
@@ -92,8 +109,8 @@ class Sender(Daemon):
 
 def main ():
     daemon = Sender('/tmp/dsender.pid')
- #   dsender = Sender()
-  #  dsender.run ()
+  #  dsender = Sender()
+ #   dsender.run ()
   #  dsender.stop ()
     if len(sys.argv) == 2:
         if 'start' == sys.argv[1]:
