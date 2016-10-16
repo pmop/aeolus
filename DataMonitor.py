@@ -19,11 +19,13 @@ def saveData (filename,path,data):
                           path,data)
 
 
+## Setting up things
 GPIO.setmode(GPIO.BOARD)
 rainSensorPine = 11
 tempSensor = Adafruit_DHT.DHT11
 tempSensorPine = 22
 refresh = 60
+GPIO.setup(11, GPIO.IN)
 
 pathSaveData = os.path.expanduser ("~") +"/SensorData"
 
@@ -32,15 +34,20 @@ print ("Reading values from Sensors")
 
 while (1):
 	hum, temp = Adafruit_DHT.read_retry(tempSensor, tempSensorPine)
-    ## When GPIO 11 goes to 0, it detected a rain drop
-    ##rain = not GPIO.input(rainSensorPine)
+	## When GPIO 11 goes to 0, it detected a rain drop
+	rain = not GPIO.input(rainSensorPine)
 
 	if hum is not None and temp is not None:
+		## Show status on console
 		print ("Temp = {0:0.1f} and Hum = {1:0.1f}\n").format(temp, hum);
+		if rain:
+			print ("Raining")
+
         	## Create RawObject
         	rawdata = {
                 	"temp" : temp,
                 	"hum" : hum,
+			"rain": rain
         	}
         	## RawObject gets created
         	dataobject = RawObject.RawObject (rawdata,"DHT11",unicode(
