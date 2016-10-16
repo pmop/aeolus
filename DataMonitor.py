@@ -43,31 +43,32 @@ while (1):
 		if rain:
 			print ("Raining")
 
-        ## Create RawData
-    	rawDHT11 = {
-            "temp" : temp,
-            "hum" : hum
-    	}
+	        ## Create RawData
+    		rawDHT11 = {
+        		"temp" : temp,
+         		"hum" : hum
+    		}
 
-        rawYL83 = {
-            "rain" : rain
-        }
+	        rawYL83 = {
+        		"rain" : rain
+	        }
 
-    	## RawObject gets created
-    	dht11Object = RawObject.RawObject (rawDHT11,"DHT11",unicode(
-            	datetime.datetime.now()
-            	.strftime("%Y-%m-%d %H:%M:%S")))
+    		## RawObject gets created
+	    	dht11Object = RawObject.RawObject (rawDHT11,"DHT11",unicode(
+        	    	datetime.datetime.now()
+            		.strftime("%Y-%m-%d %H:%M:%S")))
 
-        yl83Object = RawObject.RawObject (rawYL83, "YL83", unicode(
-                datetime.datetime.now()
-                .strftime("%Y-%m-%d %H:%M:%S")))
+	        yl83Object = RawObject.RawObject (rawYL83, "YL83", unicode(
+        	        datetime.datetime.now()
+                	.strftime("%Y-%m-%d %H:%M:%S")))
 
-    	## Data gets saved at ~/SensorData
-    	saveData (dht11Object.getDate() + ".json",
-            	  pathSaveData, dht11Object.getJsonData() )
+	    	## Data gets saved at ~/SensorData
+    		saveData (dht11Object.getDate() + ".json",
+            		pathSaveData, dht11Object.getJsonData() )
 
-        saveData (yl83Object.getDate() + "C.json",
-            	  pathSaveData, yl83Object.getJsonData() )
+	        saveData (yl83Object.getDate() + "C.json",
+          		pathSaveData, yl83Object.getJsonData() )
+
    		## Sender will be launched at another thread.
 
 	else:
