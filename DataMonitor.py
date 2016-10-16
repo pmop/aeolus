@@ -1,77 +1,96 @@
 import Adafruit_DHT
 import RPi.GPIO as GPIO
-import time
+import time, sys
 import RawObject
 import json
 import datetime
 import os
-
-#Saves data as filename at path, checking if path exists and
-#creating it if doesn't
-def saveData (filename,path,data):
-        if os.path.isdir (path):
-                file = open (path +"/" + filename,"w")
-                file.write (data)
-                file.close
-        else:
-                os.mkdir (path)
-                saveData (filename,
-                          path,data)
-
+from daemon import Daemon
+from RawObject import RawObject
 
 ## Setting up things
-GPIO.setmode(GPIO.BOARD)
-rainSensorPine = 11
-tempSensor = Adafruit_DHT.DHT11
-tempSensorPine = 22
-refresh = 60
-GPIO.setup(11, GPIO.IN)
 
-pathSaveData = os.path.expanduser ("~") +"/SensorData"
+class DataMon (Daemon):
+#class DataMon (object):
+        def run(self):
 
-print ("Aeolus Data Monitor\n")
-print ("Reading values from Sensors")
+		GPIO.setmode(GPIO.BOARD)
+		rainSensorPine = 11
+		tempSensor = Adafruit_DHT.DHT11
+		tempSensorPine = 22
+		refresh = 60
+		GPIO.setup(11, GPIO.IN)
 
-while (1):
-	hum, temp = Adafruit_DHT.read_retry(tempSensor, tempSensorPine)
-	## When GPIO 11 goes to 0, it detected a rain drop
-	rain = not GPIO.input(rainSensorPine)
 
-	if hum is not None and temp is not None:
-		## Show status on console
-		print ("Temp = {0:0.1f} and Hum = {1:0.1f}\n").format(temp, hum)
-		if rain:
-			print ("Raining")
 
-	        ## Create RawData
-    		rawDHT11 = {
-        		"temp" : temp,
-         		"hum" : hum
-    		}
+		print ("Aeolus Data Monitor\n")
 
-	        rawYL83 = {
-        		"rain" : rain
-	        }
+                pathSaveData = os.path.expanduser ("~") +"/SensorData"
+                while (True):
+			print ("Reading values from Sensors")
+                        hum, temp = Adafruit_DHT.read_retry(tempSensor,
+                                                            tempSensorPine)
+                        #Get time closest as possible to sensor read call
+                        currentdate = unicode(datetime.
+                                              datetime.now()
+                                              .strftime("%Y-%m-%d %H:%M:%S"))
+                        rain = not GPIO.input(rainSensorPine)
+			print (temp)
+                        if hum is not None and temp is not None:
+                                rawDHT11 = {
+                                        "temp": temp,
+                                        "hum" : hum
+                                }
+                                rawYL83 = {
+                                        "rain" : rain
+                                }
+                                dht11Object = RawObject (rawDHT11,
+                                                         "DHT11",
+                                                         currentdate)
+                                yl83Object = RawObject (rawYL83,
+                                                        "YL83",
+                                                        currentdate)
 
-    		## RawObject gets created
-	    	dht11Object = RawObject.RawObject (rawDHT11,"DHT11",unicode(
-        	    	datetime.datetime.now()
-            		.strftime("%Y-%m-%d %H:%M:%S")))
+				#print dht11Object.getJsonData()
+                                self.dataSaver(dht11Object.getDate() + ".json",
+                                 pathSaveData,
+                                 dht11Object.getJsonData() )
 
-	        yl83Object = RawObject.RawObject (rawYL83, "YL83", unicode(
-        	        datetime.datetime.now()
-                	.strftime("%Y-%m-%d %H:%M:%S")))
 
-	    	## Data gets saved at ~/SensorData
-    		saveData (dht11Object.getDate() + ".json",
-            		pathSaveData, dht11Object.getJsonData() )
+                                self.dataSaver(yl83Object.getDate() + "C.json",
+                                 pathSaveData,
+                                 yl83Object.getJsonData() )
 
-	        saveData (yl83Object.getDate() + "C.json",
-          		pathSaveData, yl83Object.getJsonData() )
+                        else:
+                                print ("Couldn't retrieve information")
+                        time.sleep (6) # sleeps for 6 seconds
 
-   		## Sender will be launched at another thread.
+        def dataSaver (self,filename,path,data):
+		print "Saved data"
+                if os.path.isdir (path):
+                        file = open (path +"/" + filename,"w")
+                        file.write (data)
+                        file.close
+                else:
+                        os.mkdir (path)
+                        self.dataSaver (filename,
+                                  path,data)
 
-	else:
-		print ("Temp/Hum Retrieve Failed")
-
-	time.sleep(refresh)
+def main ():
+    daemon = DataMon ('/tmp/dsender.pid')
+    if len(sys.argv) == 2:
+        if 'start' == sys.argv[1]:
+            daemon.start()
+        elif 'stop' == sys.argv[1]:
+            daemon.stop()
+        elif 'restart' == sys.argv[1]:
+            daemon.restart()
+        else:
+            print "Unknown command"
+            sys.exit(2)
+        sys.exit(0)
+    else:
+        print "usage: %s start|stop|restart" % sys.argv[0]
+        sys.exit(2)
+if __name__ == "__main__":
+    main()
