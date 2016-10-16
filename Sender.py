@@ -42,6 +42,7 @@ class SendData(object):
 ## Sender daemon
 class Sender(Daemon):
 #class Sender(object):
+    __delay = 1
     def run(self):
         log = []
         isCon = self.__checkConnection()
@@ -71,7 +72,7 @@ class Sender(Daemon):
 
             self.__wipeSentData (sent)
             self.__writeToLog (log)
-            time.sleep (1)
+            time.sleep (delay)
             if len(log) > 0:
                 log[:] = []
 

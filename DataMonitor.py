@@ -9,15 +9,12 @@ from daemon import Daemon
 from RawObject import RawObject
 
 
-#Saves data as filename at path, checking if path exists and
-#creating it if doesn't
-
 ## Setting up things
-
 print ("Aeolus Data Monitor\n")
 print ("Reading values from Sensors")
 
 class DataMon (Daemon):
+        __delay = 6
         def run(self):
 
                 GPIO.setmode(GPIO.BOARD)
@@ -34,7 +31,7 @@ class DataMon (Daemon):
                         #Get time closest as possible to sensor read call
                         currentdate = unicode(datetime.
                                               datetime.now()
-            		                          .strftime("%Y-%m-%d %H:%M:%S"))
+                                              .strftime("%Y-%m-%d %H:%M:%S"))
                         rain = not GPIO.input(rainSensorPine)
                         if hum is not None and temp is not None:
                                 rawDHT11 = {
@@ -42,8 +39,8 @@ class DataMon (Daemon):
                                         "hum" : hum
                                 }
                                 rawYL83 = {
-        		                        "rain" : rain
-	                            }
+                                        "rain" : rain
+                                }
                                 dht11Object = RawObject (rawDHT11,
                                                          "DHT11",
                                                          currentdate)
@@ -53,16 +50,16 @@ class DataMon (Daemon):
 
                                 self.__saveData
                                 (dht11Object.getDate() + ".json",
-                                          pathSaveData,
-                                          dht11Object.getJsonData() )
+                                 pathSaveData,
+                                 dht11Object.getJsonData() )
 
                                 self.__saveData
                                 (yl83Object.getDate() + "C.json",
-                                          pathSaveData,
-                                          yl83Object.getJsonData() )
+                                 pathSaveData,
+                                 yl83Object.getJsonData() )
                         else:
                                 print ("Couldn't retrieve information")
-                time.sleep (6) # sleeps for 6 seconds
+                                time.sleep (self.__delay) # sleeps for 6 seconds
 
         def __saveData (self,filename,path,data):
                 if os.path.isdir (path):
@@ -74,3 +71,24 @@ class DataMon (Daemon):
                         saveData (filename,
                                   path,data)
 
+def main ():
+    daemon = DataMon ('/tmp/dsender.pid')
+  #  dsender = Sender()
+ #   dsender.run ()
+  #  dsender.stop ()
+    if len(sys.argv) == 2:
+        if 'start' == sys.argv[1]:
+            daemon.start()
+        elif 'stop' == sys.argv[1]:
+            daemon.stop()
+        elif 'restart' == sys.argv[1]:
+            daemon.restart()
+        else:
+            print "Unknown command"
+            sys.exit(2)
+        sys.exit(0)
+    else:
+        print "usage: %s start|stop|restart" % sys.argv[0]
+        sys.exit(2)
+if __name__ == "__main__":
+    main()
