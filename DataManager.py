@@ -1,8 +1,10 @@
 from RawObject import RawObject
 from daemon import Daemon
-from os.path import expanduser, exists, isfile, join, split
+from os.path import expanduser, exists, isfile, join, split, splitext, basename
 from os import listdir, rename, mkdir
 import json
+import datetime
+from collections import OrderedDict
 
 class DataManager (object):
     __pathToData = None
@@ -20,7 +22,15 @@ class DataManager (object):
         if exists(dir):
             files = [join(dir,f)
                      for f in listdir(dir) if isfile(join(dir,f)) ]
+	files = sorted (files, key = lambda x:
+	 datetime.datetime.strptime ( basename ( splitext(x)[0] )
+		 if  basename ( splitext(x)[0] )[-1] != 'C' else
+		 basename ( splitext(x)[0] )[:-1] ,
+		'%Y-%m-%d %H:%M:%S') )
         return files
+	
+    def test(self):
+	self.generateBaseEndpoints()
 
     def setDataPath(self,path):
         self.__pathToData (path)
@@ -98,7 +108,7 @@ class DataManager (object):
             endpoints = dict()
             for yAxisKey in self.__yAxisKeys:
                 f = open (basefiles[yAxisKey]+".json","w")
-                endpoints[yAxisKey] = {
+                endpoints[yAxisKey] = OrderedDict ( {
                     "data": [
                         {
                             "type": "scatter",
@@ -133,8 +143,8 @@ class DataManager (object):
                             "t": 20
                         }
                     }
-                }
-                f.write (json.dumps (endpoints[yAxisKey]))
+                } )
+                f.write (json.dumps (endpoints[yAxisKey], sort_keys=True))
                 f.close ()
 
 def main():
