@@ -1,6 +1,7 @@
 from RawObject import RawObject
 from daemon import Daemon
-from os.path import expanduser, exists, isfile, join
+from os.path import expanduser, exists, isfile, join, split
+from os import listdir, rename, mkdir
 import json
 
 class DataManager (object):
@@ -36,6 +37,53 @@ class DataManager (object):
     def appendYAxisKey (self,key):
         self.__yAxisKeys.append (key)
     # Either generates or appends to endpoint
+    def __appendToAxis(self, axis,key, value):
+        dir = expanduser ("~") + "/endpoints"
+        dir = join (dir,key+".json")
+        if exists(dir) and isfile (dir):
+            file = open (dir,"r")
+            data = json.load (file)
+            file.close ()
+            data["data"][0][axis].append (value)
+            file = open (dir,"w")
+            file.write (json.dumps (data) )
+            file.close ()
+
+    def updateData (self):
+        self.generateBaseEndpoints ()
+        dir = expanduser ("~") + "/endpoints"
+
+        keyToFile = dict()
+        for key in self.__yAxisKeys:
+            keyToFile[key] = join (dir,key)
+
+        filedone = []
+        listFiles = self.__listFiles()
+        for file in listFiles:
+            filedone.append (file)
+            with open (file) as data_file:
+                data = json.load (data_file)
+                for key in self.__yAxisKeys:
+                    value = data["rawData"].get(key)
+                    self.__appendToAxis ('x',key,data["date"])
+                    if value is not None:
+                        self.__appendToAxis ('y',key,value)
+            data_file.close ()
+
+        self.__mvData (filedone)
+
+    def __mvData(self,fileList):
+        procddir = join(self.__pathToData,"procd")
+        if exists (procddir) and not isfile (procddir):
+            for file in fileList:
+                #splits filepath into head=path, tail=name
+                head, tail = split (file)
+                # Moves file to proccdir
+                rename (file,join(procddir,tail))
+        else:
+            mkdir (procddir)
+            self.__mvData (fileList)
+
     def generateBaseEndpoints (self):
 
         #fileList = self.__listFiles()
@@ -49,8 +97,7 @@ class DataManager (object):
         if len (basefiles) > 0:
             endpoints = dict()
             for yAxisKey in self.__yAxisKeys:
-                print yAxisKey
-                f = open (basefiles[yAxisKey],"w")
+                f = open (basefiles[yAxisKey]+".json","w")
                 endpoints[yAxisKey] = {
                     "data": [
                         {
@@ -89,16 +136,11 @@ class DataManager (object):
                 }
                 f.write (json.dumps (endpoints[yAxisKey]))
                 f.close ()
-            
-        """
-        for file in fileList:
-            with open(fileList) as data_file:
-                data = json.load (data_file)
-        """
+
 def main():
     test = DataManager ()
     test.setYAxisKeys (["hum","temp"])
-    test.generateBaseEndpoints()
+    test.updateData()
 
 
 if __name__ == "__main__":
