@@ -1,0 +1,2 @@
+This is all the data we collected. We read data from sensors each 6 seconds.
+Endpoints are data processed to be already ploted by plotly or served to flask_jsondash.
