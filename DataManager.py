@@ -22,12 +22,12 @@ class DataManager (object):
         if exists(dir):
             files = [join(dir,f)
                      for f in listdir(dir) if isfile(join(dir,f)) ]
-	files = sorted (files, key = lambda x:
+	sfiles = sorted (files, key = lambda x:
 	 datetime.datetime.strptime ( basename ( splitext(x)[0] )
 		 if  basename ( splitext(x)[0] )[-1] != 'C' else
 		 basename ( splitext(x)[0] )[:-1] ,
 		'%Y-%m-%d %H:%M:%S') )
-        return files
+        return sfiles
 	
     def test(self):
 	self.generateBaseEndpoints()
@@ -51,21 +51,22 @@ class DataManager (object):
         dir = expanduser ("~") + "/endpoints"
         dir = join (dir,key+".json")
         if exists(dir) and isfile (dir):
-            file = open (dir,"r")
-            data = json.load (file)
-            file.close ()
-            data["data"][0][axis].append (value)
-            file = open (dir,"w")
-            file.write (json.dumps (data) )
-            file.close ()
+		data = None
+		with open (dir) as file_data:
+			data = json.load (file_data)
+        	    	data["data"][0][axis].append (value)
+
+		with open (dir,"w") as file_data:
+  	         	json.dump (data,fp=file_data,sort_keys=True) 
 
     def updateData (self):
         self.generateBaseEndpoints ()
         dir = expanduser ("~") + "/endpoints"
 
+# prob redundant
         keyToFile = dict()
         for key in self.__yAxisKeys:
-            keyToFile[key] = join (dir,key)
+            keyToFile[key] = join (dir,key+".json")
 
         filedone = []
         listFiles = self.__listFiles()
@@ -78,8 +79,6 @@ class DataManager (object):
                     self.__appendToAxis ('x',key,data["date"])
                     if value is not None:
                         self.__appendToAxis ('y',key,value)
-            data_file.close ()
-
         self.__mvData (filedone)
 
     def __mvData(self,fileList):
@@ -101,13 +100,14 @@ class DataManager (object):
         # Dict of keys -> files that will be generated
         basefiles = dict()
         for key in self.__yAxisKeys:
-            if not exists (join (dir,key) ):
-                basefiles[key] = join(dir,key)
-        print basefiles
+            if not exists (join (dir,key + ".json") ):
+                basefiles[key] = join(dir,key + ".json")
+		print "creating: (doesn't exists)" + join (dir,key +".json")
+
         if len (basefiles) > 0:
             endpoints = dict()
             for yAxisKey in self.__yAxisKeys:
-                f = open (basefiles[yAxisKey]+".json","w")
+                f = open (basefiles[yAxisKey],"w")
                 endpoints[yAxisKey] = OrderedDict ( {
                     "data": [
                         {
@@ -119,13 +119,7 @@ class DataManager (object):
                             ],
                             "line": {
                                 "width": 1
-                            },
-                            "error_y": {
-                                "array": [
-                                ],
-                                "thickness": 0.5,
-                                "width": 0
-                            }
+			    }
                         }
                     ],
                     "layout": {
@@ -134,7 +128,7 @@ class DataManager (object):
                         },
                         "xaxis": {
                             "showgrid": "false",
-                            "tickformat": "%B, %Y"
+                            "tickformat": ""
                         },
                         "margin": {
                             "l": 40,
@@ -144,7 +138,7 @@ class DataManager (object):
                         }
                     }
                 } )
-                f.write (json.dumps (endpoints[yAxisKey], sort_keys=True))
+                json.dump (endpoints[yAxisKey],fp = f, sort_keys=True)
                 f.close ()
 
 def main():
